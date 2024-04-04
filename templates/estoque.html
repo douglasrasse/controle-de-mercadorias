@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque - Controle de Estoque</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilos CSS */
+        /* Ajuste para centralizar a tabela */
+        .table-container {
+            margin-top: 20px;
+            height: calc(100vh - 56px); /* 56px é a altura estimada da barra de navegação */
+            overflow-y: auto; /* Adiciona uma barra de rolagem vertical quando necessário */
+        }
+        .highlight {
+            color: red;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* Ajustes para alinhamento da tabela */
+        table {
+            width: 100%;
+        }
+        th, td {
+            text-align: center;
+            vertical-align: middle;
+            width: auto; /* Largura automática para todas as colunas */
+            white-space: nowrap; /* Impede que o texto quebre em várias linhas */
+            overflow: hidden; /* Oculta o conteúdo que ultrapassa a largura da célula */
+            text-overflow: ellipsis; /* Adiciona reticências (...) ao final do texto que não cabe na célula */
+        }
+        /* Definindo largura mínima para a coluna ID */
+        th:first-child, td:first-child {
+            min-width: 50px; /* Ajuste conforme necessário */
+        }
+        /* Estilo específico para a coluna Nome */
+        th:nth-child(3), td:nth-child(3) {
+            width: 25%; /* Definindo uma largura maior para a coluna Nome */
+        }
+        /* Estilo para campos de edição */
+        .editable {
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+        }
+        .editable:focus {
+            outline: none;
+            background-color: #f3f3f3;
+        }
+        /* Estilo para campos editáveis */
+        .editable-field {
+            background-color: #ffffcc; /* Cor de fundo para campos editáveis */
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Estoque de Produtos</a>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <span class="navbar-text" id="user-name">Carregando...</span>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('home') }}" class="btn btn-info mr-2">Home</a>
+            </li>
+            <li class="nav-item">
+                <button class="btn btn-danger" onclick="logout()">Sair</button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Container principal -->
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="table-container">
+                    <h2>Estoque de Produtos</h2>
+                    
+                    <!-- Adicionando os campos de filtro -->
+                    <div class="form-row mb-3">
+                        <div class="col">
+                            <input type="text" class="form-control" id="filtro-codigo" placeholder="Filtrar por Código">
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control" id="filtro-nome" placeholder="Filtrar por Nome">
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control" id="filtro-marca" placeholder="Filtrar por Marca">
+                        </div>
+                        <div class="col">
+                            <input type="date" class="form-control" id="filtro-data-inclusao" placeholder="Filtrar por Data de Inclusão">
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary" onclick="aplicarFiltros()">Aplicar Filtros</button>
+                            <button class="btn btn-secondary" onclick="limparFiltros()">Limpar Filtros</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabela responsiva para exibir os produtos -->
+                    <div class="table-responsive w-100">
+                        <table class="table table-hover table-striped w-100">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Código</th>
+                                    <th scope="col">Produto</th>
+                                    <th scope="col">Marca</th>
+                                    <th scope="col">Informações do Produto</th>
+                                    <th scope="col">Quantidade</th>
+                                    <th scope="col">Custo</th>
+                                    <th scope="col">Data de Inclusão</th>
+                                    <th scope="col">Data de Validade</th>
+                                    <th scope="col">Dias até Vencimento</th>
+                                    <th scope="col">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="produto-table-body">
+                                <!-- Os dados da tabela serão preenchidos dinamicamente aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-firestore.js"></script>
+
+    <script>
+        // Configuração do Firebase
+        var firebaseConfig = {
+            apiKey: "AIzaSyCCTTKM8tFMwxcYULKZwrBNO8W8hkbW_PM",
+            authDomain: "controle-de-mercadoria.firebaseapp.com",
+            projectId: "controle-de-mercadoria",
+            storageBucket: "controle-de-mercadoria.appspot.com",
+            messagingSenderId: "582797948259",
+            appId: "1:582797948259:web:controle-de-mercadoria"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // Função para verificar se o usuário está logado
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                document.getElementById('user-name').textContent = user.displayName || user.email;
+            } else {
+                // window.location.href = '/login'; // Redirecionar para a página de login se o usuário não estiver logado
+            }
+        });
+
+        // Função para fazer logout
+        function logout() {
+            firebase.auth().signOut().then(function() {
+                window.location.href = '/login'; // Redirecionar para a página de login após o logout
+            }).catch(function(error) {
+                console.error('Erro ao fazer logout', error);
+            });
+        }
+
+        // Função para calcular a diferença de dias entre duas datas
+        function diffDays(date1, date2) {
+            const diffTime = Math.abs(date2 - date1);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        // Função para formatar a data para o formato dd-mm-yyyy
+        function formatDate(date) {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
+        // Função para carregar os produtos do Firestore e preencher a tabela
+        function carregarProdutos() {
+            var tableBody = document.getElementById('produto-table-body');
+            var currentDate = new Date(); // Obtém a data atual
+
+            firebase.firestore().collection('produtos').get().then(function(querySnapshot) {
+                querySnapshot.forEach(function(doc) {
+                    var produto = doc.data();
+                    var dataValidade = produto.dataValidade;
+                    var dataCadastro = produto.dataCadastro; // Adiciona a variável para armazenar a data de cadastro
+
+                    // Verifica se há data de validade
+                    if (dataValidade) {
+                        // Converte a string da data de validade para um objeto Date
+                        var dataValidadeObj = new Date(dataValidade);
+                        var diasAteVencimento = diffDays(currentDate, dataValidadeObj);
+                        var diasClassName = diasAteVencimento <= 15 ? 'highlight' : '';
+
+                        // Se a diferença de dias for menor que zero, exibe com sinal de "-" e destaca em vermelho
+                        if (diasAteVencimento < 0) {
+                            diasAteVencimento *= -1;
+                            diasClassName = 'highlight';
+                        }
+
+                        var newRow = `
+                            <tr>
+                                <td>${doc.id}</td>
+                                <td>${produto.codigo || 'Código não disponível'}</td>
+                                <td class="editable editable-field" contenteditable="true">${produto.nomeProduto || 'Nome não disponível'}</td>
+                                <td class="editable editable-field" contenteditable="true">${produto.marcaProduto || 'Marca não disponível'}</td>
+                                <td class="editable editable-field" contenteditable="true">${produto.informacoesProduto || 'N/A'}</td>
+                                <td class="editable editable-field" contenteditable="true">${produto.quantidadeProduto || 'N/A'}</td>
+                                <td class="editable editable-field" contenteditable="true">${produto.custo !== undefined ? 'R$ ' + produto.custo.toFixed(2) : 'N/A'}</td>
+                                <td>${dataCadastro || 'N/A'}</td> <!-- Exibe a data de cadastro -->
+                                <td>${dataValidade ? formatDate(dataValidadeObj) : 'N/A'}</td>
+                                <td class="${diasClassName}">
+                                    ${diasAteVencimento}
+                                </td>
+                                <td class="btn-container">
+                                    <button class="btn btn-sm btn-danger" onclick="excluirProduto('${doc.id}')">Excluir</button>
+                                    <button class="btn btn-sm btn-success" onclick="confirmarAtualizacao('${doc.id}')">Atualizar</button>
+                                </td>
+                            </tr>`;
+                        tableBody.insertAdjacentHTML('beforeend', newRow);
+                    }
+                });
+            }).catch(function(error) {
+                console.error('Erro ao carregar produtos', error);
+            });
+        }
+
+        // Função para confirmar a atualização antes de atualizar os produtos
+        function confirmarAtualizacao(produtoId) {
+            var confirmacao = confirm("Tem certeza de que deseja atualizar este produto?");
+            if (confirmacao) {
+                atualizarProduto(produtoId);
+            }
+        }
+
+        // Função para atualizar os produtos no Firestore com base nos dados editados na tabela
+        function atualizarProduto(produtoId) {
+            var tableRow = document.getElementById(produtoId);
+            var nome = tableRow.querySelector('td:nth-child(3)').textContent;
+            var marca = tableRow.querySelector('td:nth-child(4)').textContent;
+            var informacoes = tableRow.querySelector('td:nth-child(5)').textContent;
+            var quantidade = tableRow.querySelector('td:nth-child(6)').textContent;
+            var custo = tableRow.querySelector('td:nth-child(7)').textContent;
+
+            // Construir o objeto do produto com os novos dados
+            var produtoAtualizado = {
+                nomeProduto: nome,
+                marcaProduto: marca,
+                informacoesProduto: informacoes,
+                quantidadeProduto: quantidade,
+                custo: parseFloat(custo.replace('R$ ', '')), // Remover o "R$ " e converter para número
+            };
+
+            // Atualizar os dados no Firestore
+            firebase.firestore().collection('produtos').doc(produtoId).set(produtoAtualizado, { merge: true })
+                .then(function() {
+                    console.log('Produto atualizado com sucesso:', produtoId);
+                    alert('Produto atualizado com sucesso!');
+                })
+                .catch(function(error) {
+                    console.error('Erro ao atualizar o produto:', produtoId, error);
+                    alert('Erro ao atualizar o produto. Verifique o console para obter mais informações.');
+                });
+        }
+
+        // Função para excluir um produto
+        function excluirProduto(produtoId) {
+            if (confirm('Tem certeza de que deseja excluir este produto?')) {
+                firebase.firestore().collection('produtos').doc(produtoId).delete().then(function() {
+                    alert('Produto excluído com sucesso!');
+                    // Recarrega a página para atualizar a lista de produtos após a exclusão
+                    location.reload();
+                }).catch(function(error) {
+                    console.error('Erro ao excluir produto', error);
+                    alert('Erro ao excluir o produto. Verifique o console para obter mais informações.');
+                });
+            }
+        }
+
+        // Função para aplicar os filtros de busca
+        function aplicarFiltros() {
+            var codigo = document.getElementById('filtro-codigo').value;
+            var nome = document.getElementById('filtro-nome').value;
+            var marca = document.getElementById('filtro-marca').value;
+            var inclusao = document.getElementById('filtro-data-inclusao').value;
+
+            var query = firebase.firestore().collection('produtos');
+
+            if (codigo) {
+                query = query.where('codigo', '==', codigo);
+            }
+            if (nome) {
+                query = query.where('nomeProduto', '==', nome);
+            }
+            if (marca) {
+                query = query.where('marcaProduto', '==', marca);
+            }
+            if (inclusao) {
+                query = query.where('dataCadastro', '==', inclusao);
+            }
+
+            query.get().then(function(querySnapshot) {
+                var tableBody = document.getElementById('produto-table-body');
+                tableBody.innerHTML = ''; // Limpa a tabela antes de preencher com os novos resultados
+
+                querySnapshot.forEach(function(doc) {
+                    var produto = doc.data();
+                    var newRow = `
+                        <tr id="${doc.id}">
+                            <td>${doc.id}</td>
+                            <td>${produto.codigo || 'Código não disponível'}</td>
+                            <td>${produto.nomeProduto || 'Nome não disponível'}</td>
+                            <td>${produto.marcaProduto || 'Marca não disponível'}</td>
+                            <td>${produto.informacoesProduto || 'N/A'}</td>
+                            <td>${produto.quantidadeProduto || 'N/A'}</td>
+                            <td>${produto.custo !== undefined ? 'R$ ' + produto.custo.toFixed(2) : 'N/A'}</td>
+                            <td>${produto.dataCadastro || 'N/A'}</td>
+                            <td>${produto.dataValidade || 'N/A'}</td>
+                            <td>${produto.diasAteVencimento || 'N/A'}</td>
+                            <td class="btn-container">
+                                <button class="btn btn-sm btn-danger" onclick="excluirProduto('${doc.id}')">Excluir</button>
+                                <button class="btn btn-sm btn-success" onclick="confirmarAtualizacao('${doc.id}')">Atualizar</button>
+                            </td>
+                        </tr>`;
+                    tableBody.insertAdjacentHTML('beforeend', newRow);
+                });
+            }).catch(function(error) {
+                console.error('Erro ao aplicar filtros', error);
+            });
+        }
+
+      // Função para limpar os filtros de busca e recarregar todos os produtos
+function limparFiltros() {
+    document.getElementById('filtro-codigo').value = '';
+    document.getElementById('filtro-nome').value = '';
+    document.getElementById('filtro-marca').value = '';
+    document.getElementById('filtro-data-inclusao').value = '';
+
+    // Limpa a tabela antes de recarregar os produtos
+    var tableBody = document.getElementById('produto-table-body');
+    tableBody.innerHTML = '';
+
+            // Recarrega todos os produtos
+            carregarProdutos();
+        }
+
+        // Chamando a função para carregar os produtos quando a página carregar
+        window.onload = function() {
+            carregarProdutos();
+        };
+    </script>
+</body>
+</html>

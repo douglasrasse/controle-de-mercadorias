@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos Próximos ao Vencimento</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-container {
+            margin-top: 20px;
+        }
+        .table-responsive {
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .highlight {
+            color: red;
+        }
+        .total-highlight {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .total-align {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Produtos Próximos ao Vencimento</a>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <span class="navbar-text" id="user-name">Carregando...</span>
+            </li>
+            <li class="nav-item">
+                <a class="btn btn-info ml-2" href="/home">Home</a> <!-- Botão Home -->
+            </li>
+            <li class="nav-item">
+                <button class="btn btn-danger ml-2" onclick="logout()">Sair</button>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container table-container">
+        <h2>Produtos Próximos ao Vencimento</h2>
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Código</th>
+                        <th scope="col">Nome</th>
+                        <th scope="col">Informações do Produto</th>
+                        <th scope="col">Quantidade</th>
+                        <th scope="col">Custo</th>
+                        <th scope="col">Data de Inclusão</th>
+                        <th scope="col">Data de Validade</th>
+                        <th scope="col">Dias até Vencimento</th>
+                    </tr>
+                </thead>
+                <!-- Corpo da tabela, preenchido dinamicamente com os produtos -->
+                <tbody id="productTableBody">
+                </tbody>
+                <!-- Linha adicional para exibir o total de produtos com o mesmo código -->
+                <tfoot>
+                    <tr>
+                        <td colspan="3"><strong>Total de Produtos próximo ao vencimento:</strong></td>
+                        <td colspan="2" id="totalQuantidade" class="total-align total-highlight">Carregando...</td>
+                        <td colspan="5"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><strong>Total de Produtos vencidos:</strong></td>
+                        <td colspan="2" id="totalVencidos" class="total-align total-highlight">Carregando...</td>
+                        <td colspan="5"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts do Bootstrap e jQuery para interatividade e componentes responsivos -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-firestore.js"></script>
+
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyCCTTKM8tFMwxcYULKZwrBNO8W8hkbW_PM",
+            authDomain: "controle-de-mercadoria.firebaseapp.com",
+            projectId: "controle-de-mercadoria",
+            storageBucket: "controle-de-mercadoria.appspot.com",
+            messagingSenderId: "582797948259",
+            appId: "1:582797948259:web:controle-de-mercadoria"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // Verifica se há um usuário autenticado
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // Se há um usuário autenticado, define o nome na barra de navegação
+                document.getElementById('user-name').textContent = user.displayName || user.email;
+                // Carrega os produtos próximos ao vencimento e atualiza o total de quantidade
+                carregarProdutosProximosAoVencimento();
+                atualizarTotalQuantidade();
+                atualizarTotalVencidos();
+            } else {
+                // Se não há usuário autenticado, redireciona para a página de login
+                window.location.href = '/login';
+            }
+        });
+
+        // Função para fazer logout
+        function logout() {
+            firebase.auth().signOut().then(function() {
+                // Após o logout, redireciona para a página de login
+                window.location.href = '/login';
+            }).catch(function(error) {
+                console.error('Erro ao fazer logout', error);
+            });
+        }
+
+        // Função para carregar os produtos próximos ao vencimento do Firestore e preencher a tabela
+        function carregarProdutosProximosAoVencimento() {
+            var tableBody = document.getElementById('productTableBody');
+            var currentDate = new Date(); // Obtém a data atual
+
+            firebase.firestore().collection('produtos').get().then(function(querySnapshot) {
+                querySnapshot.forEach(function(doc) {
+                    var produto = doc.data();
+                    var dataValidade = produto.dataValidade;
+
+                    // Verifica se há data de validade
+                    if (dataValidade) {
+                        // Converte a string da data de validade para um objeto Date
+                        var dataValidadeObj = new Date(dataValidade);
+                        var diasAteVencimento = diffDays(currentDate, dataValidadeObj);
+
+                        // Se o produto estiver a até 15 dias do vencimento, exibe na tabela
+                        if (diasAteVencimento <= 15) {
+                            var newRow = `
+                                <tr>
+                                    <td>${doc.id}</td>
+                                    <td>${produto.codigo || 'Código não disponível'}</td>
+                                    <td>${produto.nomeProduto || 'Nome não disponível'}</td>
+                                    <td>${produto.informacoesProduto || 'N/A'}</td>
+                                    <td>${produto.quantidadeProduto || 'N/A'}</td>
+                                    <td>${produto.custo !== undefined ? 'R$ ' + produto.custo.toFixed(2) : 'N/A'}</td>
+                                    <td>${produto.dataCadastro || 'Data não disponível'}</td>
+                                    <td>${produto.dataValidade || 'Data não disponível'}</td>
+                                    <td class="${diasAteVencimento <= 7 ? 'highlight' : ''}">
+                                        ${diasAteVencimento}
+                                    </td>
+                                </tr>`;
+                            tableBody.insertAdjacentHTML('beforeend', newRow);
+                        }
+                    }
+                });
+                // Após preencher a tabela, calcula e atualiza o total de quantidade na tabela
+                atualizarTotalQuantidade();
+            }).catch(function(error) {
+                console.error('Erro ao carregar produtos', error);
+            });
+        }
+
+        // Função para calcular a diferença de dias entre duas datas
+        function diffDays(date1, date2) {
+            const diffTime = Math.abs(date2 - date1);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        // Função para atualizar o total de quantidade de produtos próximos ao vencimento
+        function atualizarTotalQuantidade() {
+            var totalQuantidade = 0;
+            var quantidades = document.querySelectorAll('#productTableBody td:nth-child(5)'); // Selecione todas as células da coluna "Quantidade"
+
+            quantidades.forEach(function(td) {
+                totalQuantidade += parseInt(td.textContent) || 0; // Converta o texto da célula para inteiro e adicione ao total
+            });
+
+            // Após calcular o total, atualiza o valor na tabela
+            document.getElementById('totalQuantidade').textContent = totalQuantidade;
+        }
+
+        // Função para atualizar o total de produtos vencidos no estoque
+        function atualizarTotalVencidos() {
+            var totalVencidos = 0;
+            var currentDate = new Date(); // Obtém a data atual
+
+            firebase.firestore().collection('produtos').get().then(function(querySnapshot) {
+                querySnapshot.forEach(function(doc) {
+                    var produto = doc.data();
+                    var dataValidade = produto.dataValidade;
+
+                    // Verifica se há data de validade
+                    if (dataValidade) {
+                        // Converte a string da data de validade para um objeto Date
+                        var dataValidadeObj = new Date(dataValidade);
+                        var diasAteVencimento = diffDays(currentDate, dataValidadeObj);
+
+                        // Se o produto estiver vencido, adiciona a quantidade ao total
+                        if (diasAteVencimento < 0) {
+                            totalVencidos += produto.quantidadeProduto || 0;
+                        }
+                    }
+                });
+                // Após percorrer todos os produtos, atualiza o total de produtos vencidos na tabela
+                document.getElementById('totalVencidos').textContent = totalVencidos;
+            }).catch(function(error) {
+                console.error('Erro ao atualizar total de produtos vencidos', error);
+            });
+        }
+    </script>
+</body>
+</html>

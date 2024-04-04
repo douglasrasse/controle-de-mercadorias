@@ -1,0 +1,46 @@
+http://127.0.0.1:5000/
+http://localhost:5000/lista-produtos-proximo-vencimento
+http://127.0.0.1:5000/estoque
+http://127.0.0.1:5000/cadastro-mercadoria
+http://localhost:5000/saida-mercadorias
+http://127.0.0.1:5000/login
+http://127.0.0.1:5000/home
+http://localhost:5000/filtro-saida-produtos?data_inicio=2024-03-15&data_fim=2024-12-27
+
+
+link local app
+
+cd C:\Users\FAMILIA\Desktop\controle de mercadoria
+git init
+
+
+ var firebaseConfig = {
+            apiKey: "AIzaSyCCTTKM8tFMwxcYULKZwrBNO8W8hkbW_PM",
+            authDomain: "controle-de-mercadoria.firebaseapp.com",
+            projectId: "controle-de-mercadoria",
+            storageBucket: "controle-de-mercadoria.appspot.com",
+            messagingSenderId: "582797948259",
+            appId: "1:582797948259:web:controle-de-mercadoria"
+        };
+
+gmail / e login da pagina / github
+ 
+
+ alunosUnivesp
+projetointegradorunivesp2024@gmail.com
+projetointegrador
+
+github
+senha projetointegrador2024
+
+
+
+
+
+
+git config --global user.name "Alunos-univesp"
+git config --global user.email "projetointegradorunivesp2024@gmail.com"
+
+git remote add origin https://github.com/Alunos-univesp/projeto-integrador-univesp.git
+git push -u origin master
+

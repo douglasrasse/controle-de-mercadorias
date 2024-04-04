@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos que Saíram</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        h2 {
+            color: #007bff;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        /* Estilizando o botão Home */
+        .navbar-nav .btn-home {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            transition: background-color 0.3s;
+        }
+        .navbar-nav .btn-home:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar para navegação -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Produtos que Saíram</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav ml-auto">
+            <span class="navbar-text" id="user-name">Carregando...</span>
+            <a class="nav-item nav-link btn-home" href="/home">Home</a> <!-- Botão Home -->
+            <button class="btn btn-danger ml-2" onclick="logout()">Sair</button>
+        </div>
+    </div>
+</nav>
+
+
+<div class="container">
+    <h2>Produtos que Saíram do estoque nos últimos 90 dias</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nome do Produto</th>
+                <th>Marca</th>
+                <th>Custo</th>
+                <th>Quantidade</th>
+                <th>Data de Saída</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produto in produtos %}
+            <tr>
+                <td>{{ produto.nome }}</td>
+                <td>{{ produto.marca }}</td>
+                <td>{{ produto.custo }}</td>
+                <td>{{ produto.quantidade }}</td>
+                <td>{{ produto.data_saida }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<!-- Scripts para Bootstrap, Firebase e funcionalidades da página -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+
+<script>
+    var firebaseConfig = {
+        apiKey: "AIzaSyCCTTKM8tFMwxcYULKZwrBNO8W8hkbW_PM",
+        authDomain: "controle-de-mercadoria.firebaseapp.com",
+        projectId: "controle-de-mercadoria",
+        storageBucket: "controle-de-mercadoria.appspot.com",
+        messagingSenderId: "582797948259",
+        appId: "1:582797948259:web:controle-de-mercadoria"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            document.getElementById('user-name').textContent = user.displayName || user.email;
+        } else {
+            window.location.href = '/login';
+        }
+    });
+
+    function logout() {
+        firebase.auth().signOut().then(function() {
+            window.location.href = '/login';
+        }).catch(function(error) {
+            console.error('Erro ao fazer logout', error);
+        });
+    }
+</script>
+
+</body>
+</html>

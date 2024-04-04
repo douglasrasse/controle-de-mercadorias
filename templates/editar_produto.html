@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Produto</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar para navegação -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Editar Produto</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <span class="navbar-text mr-3">Usuário: <span id="user-name">Carregando...</span></span>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-secondary mr-2" href="/home">Home</a>
+                    <button class="btn btn-danger" onclick="logout()">Sair</button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Editar Produto</h2>
+        <form id="editar-produto-form">
+            <div class="form-group">
+                <label for="nomeProduto">Nome do Produto:</label>
+                <input type="text" class="form-control" id="nomeProduto" name="nomeProduto" placeholder="Digite o nome do produto">
+            </div>
+            <div class="form-group">
+                <label for="marcaProduto">Marca do Produto:</label>
+                <input type="text" class="form-control" id="marcaProduto" name="marcaProduto" placeholder="Digite a marca do produto">
+            </div>
+            <div class="form-group">
+                <label for="informacoesProduto">Informações do Produto:</label>
+                <input type="text" class="form-control" id="informacoesProduto" name="informacoesProduto" placeholder="Digite as informações do produto">
+            </div>
+            <div class="form-group">
+                <label for="codigo">Código:</label>
+                <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Digite o código do produto">
+            </div>
+            <div class="form-group">
+                <label for="custo">Custo:</label>
+                <input type="text" class="form-control" id="custo" name="custo" placeholder="Digite o custo do produto">
+            </div>
+            <div class="form-group">
+                <label for="quantidadeProduto">Quantidade:</label>
+                <input type="text" class="form-control" id="quantidadeProduto" name="quantidadeProduto" placeholder="Digite a quantidade do produto">
+            </div>
+            <div class="form-group">
+                <label for="dataCadastro">Data de Cadastro:</label>
+                <input type="text" class="form-control" id="dataCadastro" name="dataCadastro" placeholder="Digite a data de cadastro do produto">
+            </div>
+            <div class="form-group">
+                <label for="dataValidade">Data de Validade:</label>
+                <input type="text" class="form-control" id="dataValidade" name="dataValidade" placeholder="Digite a data de validade do produto">
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="button" class="btn btn-secondary" onclick="history.back()">Voltar</button>
+        </form>
+    </div>
+
+    <!-- Scripts para Bootstrap, jQuery e Firebase -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-firestore.js"></script>
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyCCTTKM8tFMwxcYULKZwrBNO8W8hkbW_PM",
+            authDomain: "controle-de-mercadoria.firebaseapp.com",
+            projectId: "controle-de-mercadoria",
+            storageBucket: "controle-de-mercadoria.appspot.com",
+            messagingSenderId: "582797948259",
+            appId: "1:582797948259:web:controle-de-mercadoria"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        var db = firebase.firestore();
+
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                document.getElementById('user-name').textContent = user.displayName || user.email;
+            } else {
+                window.location.href = '/login';
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(function() {
+                window.location.href = '/login';
+            }).catch(function(error) {
+                console.error('Erro ao fazer logout', error);
+            });
+        }
+
+        // Função para atualizar o documento no Firestore
+        function atualizarProduto(produtoId, novoProduto) {
+            db.collection('produtos').doc(produtoId).update(novoProduto)
+            .then(function() {
+                console.log('Produto atualizado com sucesso!');
+            })
+            .catch(function(error) {
+                console.error('Erro ao atualizar produto:', error);
+            });
+        }
+
+        // Lidar com a submissão do formulário
+        document.getElementById('editar-produto-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Evita o envio padrão do formulário
+
+            // Obter os valores dos campos do formulário
+            var nomeProduto = document.getElementById('nomeProduto').value;
+            var marcaProduto = document.getElementById('marcaProduto').value;
+            var informacoesProduto = document.getElementById('informacoesProduto').value;
+            var codigo = document.getElementById('codigo').value;
+            var custo = document.getElementById('custo').value;
+            var quantidadeProduto = document.getElementById('quantidadeProduto').value;
+            var dataCadastro = document.getElementById('dataCadastro').value;
+            var dataValidade = document.getElementById('dataValidade').value;
+
+            // Suponha que você já tenha o ID do produto disponível na variável produtoId
+            var produtoId = 'ID_DO_PRODUTO';
+
+            // Criar um objeto com os novos dados do produto
+            var novoProduto = {
+                nome: nomeProduto,
+                marca: marcaProduto,
+                informacoes: informacoesProduto,
+                codigo: codigo,
+                custo: custo,
+                quantidade: quantidadeProduto,
+                dataCadastro: dataCadastro,
+                dataValidade: dataValidade
+            };
+
+            // Chamar a função para atualizar o produto no Firestore
+            atualizarProduto(produtoId, novoProduto);
+        });
+    </script>
+</body>
+</html>

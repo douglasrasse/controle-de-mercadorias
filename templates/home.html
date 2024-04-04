@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial - Controle de Estoque</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilizando o botão "Sair" */
+        .navbar-nav .dropdown-item {
+            cursor: pointer;
+            color: #dc3545; /* Cor do texto */
+        }
+        .navbar-nav .dropdown-item:hover {
+            background-color: transparent; /* Remover fundo ao passar o mouse */
+        }
+        /* Alinhar o botão "Sair" à direita */
+        .ml-auto {
+            margin-left: auto !important;
+        }
+        /* Estilizando a área de botões */
+        .vertical-center {
+            min-height: 100vh; 
+            display: flex;
+            align-items: center; 
+            justify-content: center; 
+        }
+        .btn-group-vertical > a {
+            margin-bottom: 10px; 
+        }
+        /* Tamanho da fonte */
+        body {
+            font-size: 18px; /* Defina o tamanho da fonte desejado */
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar com usuário logado e botão de logout -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Controle de Estoque</a>
+        <ul class="navbar-nav ml-auto"> <!-- A classe ml-auto alinha o elemento à direita -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Usuário: <span id="user-name">Carregando...</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="#" onclick="logout()">Sair</a> <!-- Botão Sair -->
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="vertical-center">
+        <div>
+            <h3 class="text-center mb-4">Sistema de Controle de Estoque</h3>
+            <div class="btn-group-vertical">
+                <a href="/cadastro-mercadoria" id="cadastro-btn" class="btn btn-primary btn-lg">Cadastro de Mercadoria</a>
+                <a href="/lista-produtos-proximo-vencimento" class="btn btn-warning btn-lg">Lista de Produtos Próximo ao Vencimento</a>
+                <a href="/estoque" id="estoque-btn" class="btn btn-success btn-lg">Estoque</a>
+                <a href="/saida-mercadorias" id="saida-btn" class="btn btn-danger btn-lg">Saída de Mercadorias</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK e configuração -->
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+    <script>
+        // Sua configuração atualizada do Firebase
+        var firebaseConfig = {
+            apiKey: "AIzaSyCCTTKM8tFMwxcYULKZwrBNO8W8hkbW_PM",
+            authDomain: "controle-de-mercadoria.firebaseapp.com",
+            projectId: "controle-de-mercadoria",
+            storageBucket: "controle-de-mercadoria.appspot.com",
+            messagingSenderId: "582797948259",
+            appId: "1:582797948259:web:controle-de-mercadoria"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                document.getElementById('user-name').textContent = user.displayName || user.email;
+                
+                // Verifica se o usuário está na lista de usuários autorizados
+                if (['douglasrasse@gmail.com'].includes(user.email)) {
+                    document.getElementById('cadastro-btn').style.display = "block";
+                    document.getElementById('estoque-btn').style.display = "block";
+                    document.getElementById('saida-btn').style.display = "block";
+                } else {
+                    document.getElementById('cadastro-btn').style.display = "none";
+                    document.getElementById('estoque-btn').style.display = "none";
+                    document.getElementById('saida-btn').style.display = "none";
+                }
+            } else {
+                window.location.href = '/login';
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(function() {
+                window.location.href = '/login';
+            }).catch(function(error) {
+                console.error('Erro ao fazer logout', error);
+            });
+        }
+    </script>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
