@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import firebase_admin
 from firebase_admin import credentials, firestore
 from flask import jsonify
+from werkzeug.urls import unquote
 
 # Inicialize o Firebase Admin SDK com suas credenciais
 cred = credentials.Certificate("controle-de-mercadoria-firebase-adminsdk-z1zlf-036e096d97.json")
