@@ -1,1 +1,2 @@
 Flask==2.0.2
+firebase-admin==5.0.1
